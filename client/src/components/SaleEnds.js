@@ -4,6 +4,22 @@ import millify from "millify";
 import getTimeUntil from "../utils/getTimeUntil";
 import SaleEndTimer from "./SaleEndTimer";
 import GlobalContext from "../context/GlobalContext";
+import Modal from "react-modal";
+
+const statues = ["Deposit", "Withdraw"]
+
+const customStyles = {
+  content: {
+    top: '50%',
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    marginRight: '-50%',
+    transform: 'translate(-50%, -50%)',
+  },
+};
+
+// Modal.setAppElement('myElement');
 
 const SaleEnds = () => {
   const { handleConnectWallet, icoState } = useContext(GlobalContext);
@@ -35,6 +51,22 @@ const SaleEnds = () => {
     }
   }
 
+  let subtitle;
+  const [modalIsOpen, setIsOpen] = React.useState(false);
+
+  function openModal() {
+    setIsOpen(true);
+  }
+
+  function afterOpenModal() {
+    // references are now sync'd and can be accessed.
+    subtitle.style.color = '#f00';
+  }
+
+  function closeModal() {
+    setIsOpen(false);
+  }
+
   return (
     <div className="sale-ends-container">
       <div className="card text-center">
@@ -42,11 +74,8 @@ const SaleEnds = () => {
           <div>TOKEN SALE ENDS IN</div>
 
           {/* Time Limit*/}
-          <div className="flex m-4 gap-3 justify-center">
-            <SaleEndTimer
-              time={timer.days}
-              text={timer.days > 1 ? "Days" : "Day"}
-            />
+          <div className="flex m-2 gap-4 justify-center">
+            
             <SaleEndTimer
               time={timer.hours}
               text={timer.hours > 1 ? "Hours" : "Hour"}
@@ -76,16 +105,23 @@ const SaleEnds = () => {
                   {(icoState.tokensAvailable / 5000000) * 100} %
                 </div>
                 Tokens Available
-              </div>
+              </div>Connect Wallet
             </div>
           ) : (
             <div className="flex justify-center items-center flex-col mt-10">
               <div className="text-[1rem] mb-2">
-                Please Connect Wallet for Buying Tokens
+                Started: 12:23 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ends: 12:25
               </div>
-              <div className="btn text-[1rem]" onClick={handleConnectWallet}>
-                Connect Wallet
-              </div>
+              <div>
+                <div >
+                  <form> 
+                    <input className="input" type="number"></input>
+                  </form>
+                  <div className="btn text-[1rem]" onClick={openModal}>
+                    { statues[0] }
+                  </div>
+                </div>
+             </div>
             </div>
           )}
         </div>
