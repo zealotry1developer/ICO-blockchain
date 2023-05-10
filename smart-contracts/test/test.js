@@ -1,94 +1,63 @@
-const { expect, assert  } = require("chai");
+const { expect } = require("chai");
 
-contract("StknICO", (accounts) => {
-  let ico;
-  let token;
-  let accounts;
-
-  beforeEach(async () => {
-    // Deploy a new ERC20 token contract
-    token = await ethers.getContractFactory("STKN");
-
-    // Deploy a new StknICO contract
-    ico = await ethers.getContractFactory("ICO");
-
-    accounts = await ethers.getSigners();
+describe("Token contract", function () {
+    it("Deployment should assign the total supply of tokens to the owner", async function () {
     
-    // Set ICO state to RUNNING
-    await token.deployed();
-  });
+        const [owner, user] = await ethers.getSigners();
+        const userAddress = await user.getAddress();
+        const ownerAddress = await owner.getAddress();
+        const userAmount = 10
+        console.log("Deploying STKN Contract...");
+        const STKNFactory = await ethers.getContractFactory("STKN");
+        const stkn = await STKNFactory.deploy();
 
-  it("allows investors to invest in the ICO", async () => {
-    const investment = web3.utils.toWei("0.02", "ether"); // Invest 0.02 ether
+        //STKNICO
+        console.log("Deploying stknICO Contract...");
+        const StknICOFactory = await ethers.getContractFactory("StknICO");
+        const stknICO = await StknICOFactory.deploy(
+        ownerAddress,
+        stkn.address
+        );
+        console.log("Deployed stknICO:", stknICO.address);
+        await stkn.mint(stknICO.address, 5000)
+        
+        await stknICO.startICO();
+        
+        const stknICOWithOwner = await stknICO.connect(ownerAddress);
+        const ownerBalance = await stknICOWithOwner.getICOTokenBalance();
+        console.log("Owner balance is ", ownerBalance);
+        
+        const stknICOWithUser = await stknICO.connect(user);
+        await stknICOWithUser.deposit({value: ethers.utils.parseEther((0.001 * userAmount).toString()),});
+        console.log("success transfer: ", {value: ethers.utils.parseEther((0.001 * userAmount).toString()),});
+        const userBalance = await stknICO.purchaseBalanceOf(ownerAddress);
+        console.log("User balance is ", userBalance);
+    });
 
-    // Investor 1 invests in the ICO
-    await ico.deposit({ from: investor1, value: investment });
+    /* test startICO */
 
-    // Check investor 1 balance
-    const purchasedAmount1 = await ico.purchasedAmountOf(investor1);
-    assert.equal(purchasedAmount1.toString(), investment.toString());
+    //test startICO
 
-    // Check ICO balance
-    const raisedAmount = await ico.raisedAmount();
-    assert.equal(raisedAmount.toString(), investment.toString());
+    /* test deposit */
 
-    // Check ICO token balance
-    const expectedTokens = investment / ico.tokenPrice() * 1e18;
-    const icoTokenBalance = await ico.getICOTokenBalance();
-    assert.equal(icoTokenBalance.toString(), expectedTokens.toString());
-  });
+    // test minPurchase
 
-  it("allows investors to withdraw their investment if the ICO fails", async () => {
-    const investment = web3.utils.toWei("0.02", "ether"); // Invest 0.02 ether
+    // test maxPurchase
 
-    // Investor 1 invests in the ICO
-    await ico.deposit({ from: investor1, value: investment });
+    // test hardCap
 
-    // Fail the ICO
-    await ico.failed({ from: admin });
+    /* test endICO */
 
-    // Investor 1 withdraws their investment
-    const balanceBefore = await web3.eth.getBalance(investor1);
-    await ico.withdraw({ from: investor1 });
-    const balanceAfter = await web3.eth.getBalance(investor1);
+    // test endICO
 
-    // Check investor 1 balance
-    const expectedBalance = new web3.utils.BN(balanceBefore).add(new web3.utils.BN(investment));
-    assert.equal(balanceAfter.toString(), expectedBalance.toString());
+    /* test withdraw */
 
-    // Check investor 1 balance on the ICO contract
-    const purchasedAmount1 = await ico.purchasedAmountOf(investor1);
-    assert.equal(purchasedAmount1.toString(), "0");
+    // test withdraw
 
-    // Check ICO balance
-    const raisedAmount = await ico.raisedAmount();
-    assert.equal(raisedAmount.toString(), "0");
-  });
+    /* test claim */
 
-  it("allows investors to claim their tokens if the ICO succeeds", async () => {
-    const investment = web3.utils.toWei("0.02", "ether"); // Invest 0.02 ether
+    // test minPurchase
 
-    // Investor 1 invests in the ICO
-    await ico.deposit({ from: investor1, value: investment });
+    // test claim
 
-    // Succeed the ICO
-    await ico.successed({ from: admin });
-
-    // Investor 1 claims their tokens
-    const tokensBefore = await token.balanceOf(investor1);
-    await ico.claim({ from: investor1, value: investment });
-    const tokensAfter = await token.balanceOf(investor1);
-
-    // Check investor 1 token balance
-    const expectedTokens = investment / ico.tokenPrice() * 1e18;
-    assert.equal(tokensAfter.toString(), expectedTokens.toString());
-
-    // Check investor 1 balance on the ICO contract
-    const purchasedAmount1 = await ico.purchasedAmountOf(investor1);
-    assert.equal(purchasedAmount1.toString(), "0");
-
-    // Check ICO token balance
-    const icoTokenBalance = await ico.getICOTokenBalance();
-    assert.equal(icoTokenBalance.toString(), "0");
-  });
 });

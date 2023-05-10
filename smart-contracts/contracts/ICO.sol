@@ -179,6 +179,7 @@ contract StknICO {
     function claim() public payable {
         require(ICOState == State.SUCCESSED, "ICO has not SUCCESSED");
         require(purchasedAmountOf[msg.sender] >= msg.value, "Have not this amount");
+        // require()
 
         purchasedAmountOf[msg.sender] -= msg.value;
 
