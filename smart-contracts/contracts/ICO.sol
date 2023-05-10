@@ -94,9 +94,8 @@ contract StknICO {
     //Set ICO State
     function startICO() external onlyAdmin {
         require(ICOState == State.BEFORE, "ICO isn't in before state");
+        require(block.timestamp >= icoStartTime, "ICO should not be started yet");
 
-        icoStartTime = block.timestamp;
-        icoEndTime = icoStartTime + 86400;
         ICOState = State.RUNNING;
     }
     
