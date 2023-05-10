@@ -11,7 +11,6 @@ const SaleEnds = () => {
 
   const [timer, setTimer] = useState({
     icoEndDate: "Tuesday, 15 August 2023 18:19:48 GMT+00:00",
-    days: "0",
     hours: "0",
     minutes: "0",
     seconds: "0",
@@ -23,11 +22,10 @@ const SaleEnds = () => {
 
   function handleGetTimeUntil(icoEndDate) {
     if (getTimeUntil(icoEndDate)) {
-      const { days, hours, minutes, seconds } = getTimeUntil(icoEndDate);
+      const { hours, minutes, seconds } = getTimeUntil(icoEndDate);
 
       setTimer({
         icoEndDate: timer.icoEndDate,
-        days,
         hours,
         minutes,
         seconds,
@@ -43,10 +41,6 @@ const SaleEnds = () => {
 
           {/* Time Limit*/}
           <div className="flex m-4 gap-3 justify-center">
-            <SaleEndTimer
-              time={timer.days}
-              text={timer.days > 1 ? "Days" : "Day"}
-            />
             <SaleEndTimer
               time={timer.hours}
               text={timer.hours > 1 ? "Hours" : "Hour"}
@@ -67,15 +61,18 @@ const SaleEnds = () => {
               <div className="mb-1">
                 {millify(icoState.tokensAvailable)} STKN
               </div>
-              <div className="h-4 w-full bg-gray-200 mb-6 rounded-xl text-md">
+              <div className="h-4 w-full bg-gray-200 mb-16 rounded-xl text-md">
                 <div
                   className={`w-${
-                    (icoState.tokensAvailable / 5000000) * 100
+                    (5000-icoState.tokensAvailable ) 
                   }% h-4 bg-teal-700 rounded-xl text-xs font-bold text-center p-0.5 leading-none`}
                 >
-                  {(icoState.tokensAvailable / 5000000) * 100} %
+                  {(5000 -icoState.tokensAvailable ).toFixed(2) }
                 </div>
-                Tokens Available
+                <div>SoftCap: 0.1</div>
+                <div>HardCap: 0.5</div>
+                <div>ICO State: {typeof(icoState.ICOS)}</div>
+                 
               </div>
             </div>
           ) : (

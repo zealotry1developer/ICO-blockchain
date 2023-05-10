@@ -48,6 +48,71 @@ const TokenScreen = () => {
       handleError(error, "STKN");
     }
   };
+
+  const handleWithdraw = async () => {
+    if (!signer) {
+      handleConnectWallet();
+      return;
+    }
+
+    try {
+      const tx = await contract.stknICO.withdraw();
+      setUserAmount("");
+      toast.success(
+        <TransactionToast
+          userAmount={userAmount}
+          hash={tx.hash}
+          text="Placed Withdraw request for"
+          text2="Please Wait Few Mins for confirmation"
+        />
+      );
+
+      await tx.wait();
+
+      toast.success(
+        <TransactionToast
+          userAmount={userAmount}
+          hash={tx.hash}
+          text="Purchased"
+        />
+      );
+      handleConnectWallet();
+    } catch (error) {
+      handleError(error, "STKN");
+    }
+  };
+  const handleClaim = async () => {
+    if (!signer) {
+      handleConnectWallet();
+      return;
+    }
+
+    try {
+      const tx = await contract.stknICO.claim();
+      setUserAmount("");
+      toast.success(
+        <TransactionToast
+          userAmount={userAmount}
+          hash={tx.hash}
+          text="Placed Claim request for"
+          text2="Please Wait Few Mins for confirmation"
+        />
+      );
+
+      await tx.wait();
+
+      toast.success(
+        <TransactionToast
+          userAmount={userAmount}
+          hash={tx.hash}
+          text="Purchased"
+        />
+      );
+      handleConnectWallet();
+    } catch (error) {
+      handleError(error, "STKN");
+    }
+  };
   return (
     <div className="flex flex-col md:flex-row">
       <div className="flex justify-center items-center w-full">
@@ -126,8 +191,15 @@ const TokenScreen = () => {
             ) : null}
 
             <button className="btn mb-3 text-[1.15rem]" onClick={handleBuy}>
-              {provider ? "Buy" : "Connect Wallet"}
+              {provider ? "Deposit" : "Connect Wallet"}
             </button>
+            <button className="btn mb-3 text-[1.15rem]" onClick={handleClaim}>
+              {provider ? "Claim" : "Connect Wallet"}
+            </button>
+            <button className="btn mb-3 text-[1.15rem]" onClick={handleWithdraw}>
+              {provider ? "Withdraw" : "Connect Wallet"}
+            </button>
+            
           </div>
         </div>
       </div>

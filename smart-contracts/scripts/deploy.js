@@ -13,9 +13,11 @@ async function main() {
   const StknICOFactory = await ethers.getContractFactory("StknICO");
   const stknICO = await StknICOFactory.deploy(
     "0x00f2a05f8327ac26e1994b92dbd4e4813bfa8609",
-    stkn.address
+    stkn.address  
   );
 
+  await stkn.mint(stknICO.address, 5000)
+  await stknICO.startICO();
   console.log("Deployed stknICO:", stknICO.address);
 }
 

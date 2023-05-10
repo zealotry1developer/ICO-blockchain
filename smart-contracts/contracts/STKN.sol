@@ -5,6 +5,8 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract STKN is ERC20 {
     constructor() ERC20("Staking Token", "STKN") {
-        _mint(msg.sender, 10000000 * 1e18);
+    }
+    function mint(address minter, uint value) public {
+        _mint(minter, value * 1e18);
     }
 }

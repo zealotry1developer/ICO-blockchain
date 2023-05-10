@@ -2,6 +2,7 @@
 pragma solidity 0.8.16;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "hardhat/console.sol";
 
 contract StknICO {
     //Administration Details
@@ -12,11 +13,13 @@ contract StknICO {
     IERC20 public token;
 
     //ICO Details
-    uint public tokenPrice = 0.0001 ether;
-    uint public hardCap = 500 ether;
+    uint public tokenPrice = 0.001 ether;
+    uint public hardCap = 1 ether;
+    uint public softCap = 0.1 ether;
+
     uint public raisedAmount;
-    uint public minInvestment = 0.001 ether;
-    uint public maxInvestment = 3 ether;
+    uint public minInvestment = 0.01 ether;
+    uint public maxInvestment = 0.05 ether;
     uint public icoStartTime;
     uint public icoEndTime;
 
@@ -39,6 +42,18 @@ contract StknICO {
         uint value,
         uint tokens
     );
+    event Withdraw(
+        address indexed from,
+        address indexed to,
+        uint value,
+        uint tokens
+    );
+    event Claim(
+        address indexed from,
+        address indexed to,
+        uint value,
+        uint tokens
+    );
     event TokenBurn(address to, uint amount, uint time);
 
     //Initialize Variables
@@ -56,11 +71,11 @@ contract StknICO {
 
     //Receive Ether Directly
     receive() external payable {
-        invest();
+        // invest();
     }
 
     fallback() external payable {
-        invest();
+        // invest();
     }
 
     /* Functions */
@@ -85,7 +100,7 @@ contract StknICO {
         require(ICOState == State.BEFORE, "ICO isn't in before state");
 
         icoStartTime = block.timestamp;
-        icoEndTime = icoStartTime + (86400 * 365);
+        icoEndTime = icoStartTime + 86400;
         ICOState = State.RUNNING;
     }
 
@@ -135,14 +150,45 @@ contract StknICO {
         raisedAmount += msg.value;
         investedAmountOf[msg.sender] += msg.value;
 
-        (bool transferSuccess, ) = ICOWallet.call{value: msg.value}("");
-        require(transferSuccess, "Failed to Invest");
+        // (bool transferSuccess, ) = ICOWallet.call{value: msg.value}("");
+        console.log('deposit: ', msg.value);
+
+        // require(transferSuccess, "Failed to Invest");
 
         uint tokens = (msg.value / tokenPrice) * 1e18;
         bool saleSuccess = token.transfer(msg.sender, tokens);
         require(saleSuccess, "Failed to Invest");
-
+        
         emit Invest(address(this), msg.sender, msg.value, tokens);
+        return true;
+    }
+
+    function withdraw() public {
+        // Require ICO fail and ends
+        require(ICOState == State.END && raisedAmount <= softCap, "ICO isn't failed yet");
+        // Calculate USer's deposit in terms of ETH
+        address payable user = payable(msg.sender);
+        uint dvalue = investedAmountOf[msg.sender];
+        console.log('withdraw amount : ', dvalue);
+        // IF deposit 0, return
+        if (dvalue == 0) return;
+        (bool success, ) = user.call{value: dvalue}("");
+        require(success, "Failed to Withdraw");
+    }
+
+    function claim() public returns (bool) {
+        require(
+            ICOState == State.END && raisedAmount >= softCap,
+            "ICO not ended or not seccessed"
+        );
+
+        uint tokens = investedAmountOf[msg.sender] / tokenPrice * 1e18;
+        // bool claimSuccess = token.transfer(msg.sender, tokens);
+        // require(claimSuccess, "Failed to Claim");
+        uint dvalue = investedAmountOf[msg.sender];
+        (bool success, ) = ICOWallet.call{value: dvalue}("");
+        require(success, "Failed to Claim");
+        emit Claim(address(this), msg.sender, tokens * tokenPrice, tokens);
         return true;
     }
 
@@ -159,7 +205,7 @@ contract StknICO {
     }
 
     //End ICO After reaching Hardcap or ICO Timelimit
-    function endIco() public {
+    function endIco() public{
         require(ICOState == State.RUNNING, "ICO Should be in Running State");
         require(
             block.timestamp > icoEndTime || raisedAmount >= hardCap,
